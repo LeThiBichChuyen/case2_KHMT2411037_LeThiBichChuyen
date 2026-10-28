@@ -1,6 +1,10 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
+// Set lưu token đã logout (blacklist đơn giản in-memory)
+// Production nên dùng Redis
+const tokenBlacklist = new Set();
+
 // Tạo JWT token
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -8,72 +12,142 @@ const generateToken = (id) => {
   });
 };
 
-// POST /api/auth/register
+/**
+ * @desc    Đăng ký tài khoản mới
+ * @route   POST /api/auth/register
+ * @access  Public
+ */
 const register = async (req, res, next) => {
   try {
     const { fullName, email, password } = req.body;
 
-    const existingUser = await User.findOne({ email });
+    // Kiểm tra email đã tồn tại
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
     if (existingUser) {
       return res.status(400).json({ message: 'Email đã được sử dụng' });
     }
 
-    const user = await User.create({ fullName, email, passwordHash: password });
+    // Tạo user mới (password sẽ được hash bởi pre-save hook)
+    const user = await User.create({
+      fullName,
+      email,
+      passwordHash: password,
+    });
+
     const token = generateToken(user._id);
 
-    res.status(201).json({ message: 'Đăng ký thành công', token, user });
+    res.status(201).json({
+      message: 'Đăng ký tài khoản thành công',
+      token,
+      user,
+    });
   } catch (error) {
     next(error);
   }
 };
 
-// POST /api/auth/login
+/**
+ * @desc    Đăng nhập
+ * @route   POST /api/auth/login
+ * @access  Public
+ */
 const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email }).select('+passwordHash');
-    if (!user || !(await user.comparePassword(password))) {
+    // Tìm user và lấy passwordHash
+    const user = await User.findOne({ email: email.toLowerCase() }).select('+passwordHash');
+    if (!user) {
+      return res.status(401).json({ message: 'Email hoặc mật khẩu không đúng' });
+    }
+
+    // Kiểm tra mật khẩu
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
       return res.status(401).json({ message: 'Email hoặc mật khẩu không đúng' });
     }
 
     const token = generateToken(user._id);
-    res.json({ message: 'Đăng nhập thành công', token, user });
+
+    res.json({
+      message: 'Đăng nhập thành công',
+      token,
+      user,
+    });
   } catch (error) {
     next(error);
   }
 };
 
-// GET /api/auth/me
+/**
+ * @desc    Đăng xuất (vô hiệu hóa token)
+ * @route   POST /api/auth/logout
+ * @access  Private
+ */
+const logout = (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (token) {
+    tokenBlacklist.add(token);
+  }
+  res.json({ message: 'Đăng xuất thành công' });
+};
+
+/**
+ * @desc    Lấy thông tin người dùng hiện tại
+ * @route   GET /api/auth/me
+ * @access  Private
+ */
 const getMe = async (req, res) => {
   res.json({ user: req.user });
 };
 
-// PUT /api/auth/me
+/**
+ * @desc    Cập nhật thông tin cá nhân
+ * @route   PUT /api/auth/me
+ * @access  Private
+ */
 const updateMe = async (req, res, next) => {
   try {
     const { fullName, avatarUrl } = req.body;
+
+    const updateData = {};
+    if (fullName !== undefined) updateData.fullName = fullName;
+    if (avatarUrl !== undefined) updateData.avatarUrl = avatarUrl;
+
     const user = await User.findByIdAndUpdate(
       req.user._id,
-      { fullName, avatarUrl },
+      updateData,
       { new: true, runValidators: true }
     );
-    res.json({ message: 'Cập nhật thành công', user });
+
+    res.json({
+      message: 'Cập nhật thông tin thành công',
+      user,
+    });
   } catch (error) {
     next(error);
   }
 };
 
-// PUT /api/auth/change-password
+/**
+ * @desc    Đổi mật khẩu
+ * @route   PUT /api/auth/change-password
+ * @access  Private
+ */
 const changePassword = async (req, res, next) => {
   try {
     const { currentPassword, newPassword } = req.body;
 
+    // Lấy user kèm passwordHash
     const user = await User.findById(req.user._id).select('+passwordHash');
-    if (!(await user.comparePassword(currentPassword))) {
+
+    // Xác minh mật khẩu hiện tại
+    const isMatch = await user.comparePassword(currentPassword);
+    if (!isMatch) {
       return res.status(400).json({ message: 'Mật khẩu hiện tại không đúng' });
     }
 
+    // Cập nhật mật khẩu mới (pre-save hook sẽ hash)
     user.passwordHash = newPassword;
     await user.save();
 
@@ -83,4 +157,4 @@ const changePassword = async (req, res, next) => {
   }
 };
 
-module.exports = { register, login, getMe, updateMe, changePassword };
+module.exports = { register, login, logout, getMe, updateMe, changePassword, tokenBlacklist };

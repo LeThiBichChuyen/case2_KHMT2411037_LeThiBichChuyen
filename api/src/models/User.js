@@ -7,6 +7,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Họ tên là bắt buộc'],
       trim: true,
+      minlength: [2, 'Họ tên phải có ít nhất 2 ký tự'],
     },
     email: {
       type: String,
@@ -14,6 +15,7 @@ const userSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
+      match: [/^\S+@\S+\.\S+$/, 'Email không hợp lệ'],
     },
     passwordHash: {
       type: String,
