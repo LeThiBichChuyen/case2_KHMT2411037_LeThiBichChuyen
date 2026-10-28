@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/task_model.dart';
 import 'task_detail_screen.dart';
+import 'notification_screen.dart'; // Import Giao diện D
 
 class TaskListScreen extends StatefulWidget {
   const TaskListScreen({super.key});
@@ -10,7 +11,6 @@ class TaskListScreen extends StatefulWidget {
 }
 
 class _TaskListScreenState extends State<TaskListScreen> {
-  // Danh sách công việc mẫu đã thêm creatorEmail và thông tin phân quyền
   final List<Task> _tasks = [
     Task(
       id: '1',
@@ -36,7 +36,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
     ),
   ];
 
-  String _filter = 'All'; // 'All', 'Completed', 'Pending'
+  String _filter = 'All';
 
   List<Task> get _filteredTasks {
     if (_filter == 'Completed') {
@@ -54,6 +54,19 @@ class _TaskListScreenState extends State<TaskListScreen> {
         title: const Text('Danh sách công việc'),
         centerTitle: true,
         actions: [
+          // NÚT MỞ GIAO DIỆN D (THÔNG BÁO & EMAIL)
+          IconButton(
+            icon: const Icon(Icons.notifications),
+            tooltip: 'Thông báo & Email',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const NotificationScreen(),
+                ),
+              );
+            },
+          ),
           PopupMenuButton<String>(
             onSelected: (value) {
               setState(() => _filter = value);
