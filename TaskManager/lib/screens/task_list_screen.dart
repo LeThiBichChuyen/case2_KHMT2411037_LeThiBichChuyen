@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/task_model.dart';
 import 'task_detail_screen.dart';
 import 'notification_screen.dart'; // Import Giao diện D
+import 'dashboard_screen.dart';    // Import Giao diện E
 
 class TaskListScreen extends StatefulWidget {
   const TaskListScreen({super.key});
@@ -34,6 +35,14 @@ class _TaskListScreenState extends State<TaskListScreen> {
       isCompleted: false,
       creatorEmail: 'admin@gmail.com',
     ),
+    Task(
+      id: '4',
+      title: 'Xây dựng Giao diện D',
+      description: 'Thông báo qua email và trong ứng dụng',
+      isCompleted: false,
+      creatorEmail: 'admin@gmail.com',
+      assigneeEmail: 'lchzuyen@gmail.com',
+    ),
   ];
 
   String _filter = 'All';
@@ -54,6 +63,19 @@ class _TaskListScreenState extends State<TaskListScreen> {
         title: const Text('Danh sách công việc'),
         centerTitle: true,
         actions: [
+          // NÚT MỞ GIAO DIỆN E (THỐNG KÊ & TIỆN ÍCH)
+          IconButton(
+            icon: const Icon(Icons.bar_chart),
+            tooltip: 'Thống kê & Tiện ích',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const DashboardScreen(),
+                ),
+              );
+            },
+          ),
           // NÚT MỞ GIAO DIỆN D (THÔNG BÁO & EMAIL)
           IconButton(
             icon: const Icon(Icons.notifications),
