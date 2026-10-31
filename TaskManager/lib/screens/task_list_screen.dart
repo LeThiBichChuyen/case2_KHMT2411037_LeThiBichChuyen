@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../models/task_model.dart';
 import 'task_detail_screen.dart';
-import 'notification_screen.dart'; // Import Giao diện D
-import 'dashboard_screen.dart';    // Import Giao diện E
+import 'notification_screen.dart';
+import 'dashboard_screen.dart';
+import 'task_create_screen.dart';
+import 'profile/profile_screen.dart';
 
 class TaskListScreen extends StatefulWidget {
   const TaskListScreen({super.key});
@@ -19,7 +21,6 @@ class _TaskListScreenState extends State<TaskListScreen> {
       description: 'Thiết kế màn hình Đăng nhập và Đăng ký',
       isCompleted: true,
       creatorEmail: 'admin@gmail.com',
-      assigneeEmail: 'lchzuyen@gmail.com',
     ),
     Task(
       id: '2',
@@ -41,71 +42,43 @@ class _TaskListScreenState extends State<TaskListScreen> {
       description: 'Thông báo qua email và trong ứng dụng',
       isCompleted: false,
       creatorEmail: 'admin@gmail.com',
-      assigneeEmail: 'lchzuyen@gmail.com',
     ),
   ];
-
-  String _filter = 'All';
-
-  List<Task> get _filteredTasks {
-    if (_filter == 'Completed') {
-      return _tasks.where((t) => t.isCompleted).toList();
-    } else if (_filter == 'Pending') {
-      return _tasks.where((t) => !t.isCompleted).toList();
-    }
-    return _tasks;
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Danh sách công việc'),
-        centerTitle: true,
         actions: [
-          // NÚT MỞ GIAO DIỆN E (THỐNG KÊ & TIỆN ÍCH)
+          IconButton(
+            icon: const Icon(Icons.account_circle),
+            tooltip: 'Cá nhân',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (c) => const ProfileScreen()),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.bar_chart),
-            tooltip: 'Thống kê & Tiện ích',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const DashboardScreen(),
-                ),
-              );
-            },
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (c) => const DashboardScreen()),
+            ),
           ),
-          // NÚT MỞ GIAO DIỆN D (THÔNG BÁO & EMAIL)
           IconButton(
             icon: const Icon(Icons.notifications),
-            tooltip: 'Thông báo & Email',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const NotificationScreen(),
-                ),
-              );
-            },
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (c) => const NotificationScreen()),
+            ),
           ),
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              setState(() => _filter = value);
-            },
-            icon: const Icon(Icons.filter_list),
-            itemBuilder: (context) => [
-              const PopupMenuItem(value: 'All', child: Text('Tất cả')),
-              const PopupMenuItem(value: 'Pending', child: Text('Chưa xong')),
-              const PopupMenuItem(value: 'Completed', child: Text('Đã xong')),
-            ],
-          )
         ],
       ),
       body: ListView.builder(
-        itemCount: _filteredTasks.length,
+        itemCount: _tasks.length,
         itemBuilder: (context, index) {
-          final task = _filteredTasks[index];
+          final task = _tasks[index];
           return Card(
             margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             child: ListTile(
@@ -124,14 +97,28 @@ class _TaskListScreenState extends State<TaskListScreen> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => TaskDetailScreen(task: task),
-                  ),
+                  MaterialPageRoute(builder: (context) => TaskDetailScreen(task: task)),
                 );
               },
             ),
           );
         },
+      ),
+      // Nút FloatingActionButton hứng kết quả trả về từ màn hình Tạo công việc
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          final newTask = await Navigator.push<Task>(
+            context,
+            MaterialPageRoute(builder: (context) => const TaskCreateScreen()),
+          );
+
+          if (newTask != null) {
+            setState(() {
+              _tasks.add(newTask);
+            });
+          }
+        },
+        child: const Icon(Icons.add),
       ),
     );
   }

@@ -1,24 +1,11 @@
 import 'package:flutter/material.dart';
 import '../models/task_model.dart';
-import 'task_share_screen.dart'; // Import Giao diện C
+import 'task_edit_screen.dart';
+import 'task_share_screen.dart'; // Sử dụng đúng tên file task_share_screen.dart trong cây thư mục
 
-class TaskDetailScreen extends StatefulWidget {
+class TaskDetailScreen extends StatelessWidget {
   final Task task;
-
   const TaskDetailScreen({super.key, required this.task});
-
-  @override
-  State<TaskDetailScreen> createState() => _TaskDetailScreenState();
-}
-
-class _TaskDetailScreenState extends State<TaskDetailScreen> {
-  late bool _isCompleted;
-
-  @override
-  void initState() {
-    super.initState();
-    _isCompleted = widget.task.isCompleted;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +13,6 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
       appBar: AppBar(
         title: const Text('Chi tiết công việc'),
         actions: [
-          // NÚT BẤM KẾT NỐI SANG GIAO DIỆN C (GIAO VIỆC & CHIA SẺ)
           IconButton(
             icon: const Icon(Icons.share),
             tooltip: 'Giao việc & Chia sẻ',
@@ -34,7 +20,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => TaskShareScreen(task: widget.task),
+                  builder: (context) => TaskShareScreen(task: task),
                 ),
               );
             },
@@ -47,65 +33,43 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              widget.task.title,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+              task.title,
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Text(
-              'Tạo bởi: ${widget.task.creatorEmail}',
-              style: TextStyle(color: Colors.grey[600]),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Mô tả:',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              widget.task.description.isEmpty
-                  ? 'Không có mô tả'
-                  : widget.task.description,
+              task.description,
               style: const TextStyle(fontSize: 16),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             Row(
               children: [
-                Checkbox(
-                  value: _isCompleted,
-                  onChanged: (value) {
-                    setState(() {
-                      _isCompleted = value ?? false;
-                    });
-                  },
+                const Text(
+                  'Trạng thái: ',
+                  style: TextStyle(fontWeight: FontWeight.bold),
                 ),
-                Text(
-                  _isCompleted ? 'Đã hoàn thành' : 'Chưa hoàn thành',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: _isCompleted ? Colors.green : Colors.orange,
-                    fontWeight: FontWeight.bold,
-                  ),
+                Chip(
+                  label: Text(task.isCompleted ? 'Đã hoàn thành' : 'Chưa hoàn thành'),
+                  backgroundColor: task.isCompleted ? Colors.green.shade100 : Colors.orange.shade100,
                 ),
               ],
             ),
             const Spacer(),
+            // Nút mở màn hình Chỉnh sửa công việc (Màn hình 6)
             SizedBox(
               width: double.infinity,
               height: 48,
               child: ElevatedButton.icon(
+                icon: const Icon(Icons.edit),
+                label: const Text('Chỉnh sửa công việc'),
                 onPressed: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => TaskShareScreen(task: widget.task),
+                      builder: (context) => TaskEditScreen(task: task),
                     ),
                   );
                 },
-                icon: const Icon(Icons.person_add),
-                label: const Text('Giao việc & Chia sẻ quyền'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.deepPurple,
                   foregroundColor: Colors.white,
